@@ -1,6 +1,215 @@
-﻿<!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>Outcome Star Admin</title></head>
-<body style="font-family:sans-serif;padding:40px">
-<h1>Outcome Star Admin</h1>
-<p>Coming soon.</p>
-</body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Outcome Star — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --navy:#201868; --orange:#F07800; --gray:#7A8A9E; --bg:#F7F7F2; --line:#E3E7ED; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:Poppins,Arial,sans-serif; color:#2A2E37; background:var(--bg); }
+  a{ color:var(--navy); }
+  .hidden{ display:none !important; }
+  /* login */
+  .login-wrap{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+  .login-card{ width:100%; max-width:380px; background:#fff; border:1px solid var(--line); border-radius:16px; padding:32px; box-shadow:0 8px 30px rgba(32,24,104,.06); }
+  .brand{ font-family:Lora,serif; color:var(--navy); font-size:26px; font-weight:700; margin:0; }
+  .brand span{ color:var(--orange); }
+  .sub{ color:var(--gray); font-size:13px; margin:4px 0 22px; }
+  label{ display:block; font-size:13px; font-weight:600; color:var(--navy); margin:14px 0 5px; }
+  input{ width:100%; padding:11px 13px; border:1px solid var(--line); border-radius:9px; font-family:Poppins; font-size:14px; }
+  input:focus{ outline:2px solid var(--orange); border-color:transparent; }
+  .btn{ width:100%; margin-top:20px; padding:12px; background:var(--navy); color:#fff; border:0; border-radius:9px; font-family:Poppins; font-size:15px; font-weight:600; cursor:pointer; }
+  .btn:hover{ background:#2a1f86; }
+  .btn.ghost{ background:#fff; color:var(--navy); border:1px solid var(--navy); width:auto; padding:8px 16px; margin:0; font-size:13px; }
+  .err{ color:#B42318; font-size:13px; margin-top:12px; display:none; }
+  /* dashboard */
+  .top{ background:#fff; border-bottom:1px solid var(--line); padding:14px 28px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:5; }
+  .top .brand{ font-size:20px; }
+  .top .who{ font-size:13px; color:var(--gray); margin-right:14px; }
+  .wrap{ max-width:1180px; margin:0 auto; padding:26px 28px 60px; }
+  h2{ font-family:Lora,serif; color:var(--navy); font-size:22px; margin:30px 0 4px; }
+  h2:first-of-type{ margin-top:6px; }
+  .rule{ width:60px; border-bottom:3px solid var(--orange); margin:0 0 16px; }
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:14px; }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px 18px; }
+  .card .k{ font-size:12px; font-weight:600; color:var(--gray); text-transform:uppercase; letter-spacing:.04em; }
+  .card .v{ font-size:30px; font-weight:700; color:var(--navy); font-family:Lora,serif; margin-top:4px; }
+  .card .s{ font-size:12px; color:var(--orange); font-weight:600; margin-top:2px; }
+  table{ width:100%; border-collapse:collapse; background:#fff; border:1px solid var(--line); border-radius:12px; overflow:hidden; font-size:13px; }
+  th{ text-align:left; background:#F1F0FA; color:var(--navy); font-weight:600; padding:9px 12px; }
+  td{ padding:9px 12px; border-top:1px solid var(--line); }
+  td.num,th.num{ text-align:right; }
+  .bars{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px 18px; }
+  .bar-row{ display:flex; align-items:center; gap:10px; margin:5px 0; }
+  .bar-row .lbl{ width:150px; font-size:12px; color:var(--navy); flex:none; }
+  .bar-row .track{ flex:1; background:#EEF0F4; border-radius:5px; height:16px; overflow:hidden; }
+  .bar-row .fill{ height:100%; background:var(--orange); border-radius:5px; }
+  .bar-row .n{ width:44px; text-align:right; font-size:12px; font-weight:600; color:var(--navy); flex:none; }
+  .muted{ color:var(--gray); font-size:12px; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login" class="login-wrap">
+  <div class="login-card">
+    <p class="brand">Outcome<span>Star</span> Admin</p>
+    <p class="sub">Platform administration. Authorized access only.</p>
+    <label for="email">Email</label>
+    <input id="email" type="email" autocomplete="username" placeholder="you@srjconsultingservices.com">
+    <label for="pass">Password</label>
+    <input id="pass" type="password" autocomplete="current-password" placeholder="••••••••">
+    <button class="btn" id="login-btn">Sign in</button>
+    <div class="err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dash" class="hidden">
+  <div class="top">
+    <p class="brand">Outcome<span>Star</span> Admin</p>
+    <div style="display:flex;align-items:center">
+      <span class="who" id="who"></span>
+      <button class="btn ghost" id="refresh">Refresh</button>
+      <button class="btn ghost" id="logout" style="margin-left:8px">Sign out</button>
+    </div>
+  </div>
+  <div class="wrap" id="content">
+    <p class="muted">Loading…</p>
+  </div>
+</div>
+
+<script>
+const API = "https://focms-api.onrender.com/focms/v1/admin";
+function tok(){ return sessionStorage.getItem("os_admin_tok"); }
+function setTok(t){ if(t) sessionStorage.setItem("os_admin_tok", t); else sessionStorage.removeItem("os_admin_tok"); }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function money(n){ return "$"+Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+async function login(){
+  const err=document.getElementById("login-err");
+  err.style.display="none";
+  const email=document.getElementById("email").value.trim();
+  const password=document.getElementById("pass").value;
+  if(!email||!password){ err.textContent="Enter email and password."; err.style.display="block"; return; }
+  try{
+    const r=await fetch(API+"/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,password})});
+    const d=await r.json();
+    if(!r.ok){ err.textContent=(d&&d.detail&&d.detail.message)||(d&&d.message)||"Sign in failed."; err.style.display="block"; return; }
+    setTok(d.admin_token);
+    showDash();
+  }catch(e){ err.textContent="Network error."; err.style.display="block"; }
+}
+
+async function logout(){
+  try{ await fetch(API+"/logout",{method:"POST",headers:{Authorization:"Bearer "+tok()}}); }catch(e){}
+  setTok(null);
+  document.getElementById("dash").classList.add("hidden");
+  document.getElementById("login").classList.remove("hidden");
+}
+
+function showDash(){
+  document.getElementById("login").classList.add("hidden");
+  document.getElementById("dash").classList.remove("hidden");
+  loadStats();
+}
+
+function bars(items, labelKey, valKey, max){
+  const m = max || Math.max(1, ...items.map(i=>i[valKey]||0));
+  return '<div class="bars">'+items.map(i=>{
+    const pct = Math.round(((i[valKey]||0)/m)*100);
+    return '<div class="bar-row"><div class="lbl">'+esc(i[labelKey])+'</div>'+
+      '<div class="track"><div class="fill" style="width:'+pct+'%"></div></div>'+
+      '<div class="n">'+(i[valKey]||0)+'</div></div>';
+  }).join('')+'</div>';
+}
+
+async function loadStats(){
+  const c=document.getElementById("content");
+  c.innerHTML='<p class="muted">Loading…</p>';
+  let d;
+  try{
+    const r=await fetch(API+"/stats",{headers:{Authorization:"Bearer "+tok()}});
+    if(r.status===401||r.status===403){ setTok(null); logout(); return; }
+    d=await r.json();
+  }catch(e){ c.innerHTML='<p class="err" style="display:block">Could not load stats.</p>'; return; }
+
+  const g=d.growth||{}, e=d.engagement||{}, rev=d.revenue||{}, op=d.operational||{};
+  document.getElementById("who").textContent = "Signed in";
+
+  let h='';
+  // GROWTH
+  h+='<h2>Growth</h2><div class="rule"></div><div class="grid">';
+  h+=card("Tenants", g.tenants); h+=card("Students", g.students); h+=card("Users", g.users);
+  h+=card("New this month", g.new_tenants_month, "tenants"); 
+  h+=card("New this week", g.new_tenants_week, "tenants");
+  h+=card("New today", g.new_tenants_today, "tenants");
+  h+='</div>';
+  if((g.signups_by_week||[]).length){
+    h+='<h2>Signups by week</h2><div class="rule"></div>'+bars(g.signups_by_week,"week","count");
+  }
+
+  // REVENUE
+  h+='<h2>Revenue</h2><div class="rule"></div><div class="grid">';
+  h+=cardMoney("MRR", rev.mrr_dollars); h+=cardMoney("Annual run-rate", rev.annual_run_rate_dollars);
+  const totalSubs=(rev.active_subscriptions_by_plan||[]).reduce((a,x)=>a+(x.count||0),0);
+  h+=card("Active subscriptions", totalSubs);
+  h+='</div>';
+  if((rev.active_subscriptions_by_plan||[]).length){
+    h+='<table style="margin-top:14px"><thead><tr><th>Plan</th><th class="num">Active</th><th class="num">Unit</th><th>Interval</th></tr></thead><tbody>'+
+      rev.active_subscriptions_by_plan.map(p=>'<tr><td>'+esc(p.plan)+'</td><td class="num">'+p.count+'</td><td class="num">'+money((p.amount_cents||0)/100)+'</td><td>'+esc(p.interval||'')+'</td></tr>').join('')+
+      '</tbody></table>';
+  }
+
+  // ENGAGEMENT
+  h+='<h2>Engagement</h2><div class="rule"></div><div class="grid">';
+  h+=card("Dormant 30d+", (e.dormant||{}).d30); h+=card("Dormant 60d+", (e.dormant||{}).d60); h+=card("Dormant 90d+", (e.dormant||{}).d90);
+  h+='</div>';
+  if((e.most_active_tenants||[]).length){
+    h+='<h2>Most active tenants</h2><div class="rule"></div>'+
+      '<table><thead><tr><th>Tenant</th><th class="num">Events</th><th class="num">Records</th></tr></thead><tbody>'+
+      e.most_active_tenants.map(t=>'<tr><td>'+esc(t.name)+'</td><td class="num">'+t.events+'</td><td class="num">'+t.records+'</td></tr>').join('')+
+      '</tbody></table>';
+  }
+  if((e.records_by_type||[]).length){
+    h+='<h2>Records by type</h2><div class="rule"></div>'+bars(e.records_by_type,"type","count");
+  }
+  if((e.records_by_week||[]).length){
+    h+='<h2>Records added by week</h2><div class="rule"></div>'+bars(e.records_by_week,"week","count");
+  }
+
+  // OPERATIONAL
+  h+='<h2>Operational</h2><div class="rule"></div><div class="grid">';
+  h+=card("Storage used", (op.storage_used_gb!=null?op.storage_used_gb+" GB":"—"));
+  h+=card("Storage quota", (op.storage_quota_gb!=null?op.storage_quota_gb+" GB":"—"));
+  h+='</div>';
+  if((op.students_by_grade||[]).length){
+    h+='<h2>Students by grade</h2><div class="rule"></div>'+bars(op.students_by_grade,"grade","count");
+  }
+  if((op.top_storage_tenants||[]).length){
+    h+='<h2>Top storage tenants</h2><div class="rule"></div>'+
+      '<table><thead><tr><th>Tenant</th><th class="num">Used (GB)</th><th class="num">Quota (GB)</th></tr></thead><tbody>'+
+      op.top_storage_tenants.map(t=>'<tr><td>'+esc(t.name)+'</td><td class="num">'+t.used_gb+'</td><td class="num">'+t.quota_gb+'</td></tr>').join('')+
+      '</tbody></table>';
+  }
+
+  h+='<p class="muted" style="margin-top:24px">Generated '+esc(d.generated_at||"")+'</p>';
+  c.innerHTML=h;
+}
+
+function card(k,v,s){ return '<div class="card"><div class="k">'+esc(k)+'</div><div class="v">'+(v==null?"—":v)+'</div>'+(s?'<div class="s">'+esc(s)+'</div>':'')+'</div>'; }
+function cardMoney(k,v){ return '<div class="card"><div class="k">'+esc(k)+'</div><div class="v" style="font-size:26px">'+money(v)+'</div></div>'; }
+
+document.getElementById("login-btn").onclick=login;
+document.getElementById("pass").addEventListener("keydown",e=>{ if(e.key==="Enter") login(); });
+document.getElementById("logout").onclick=logout;
+document.getElementById("refresh").onclick=loadStats;
+
+// auto-resume if a token exists
+if(tok()) showDash();
+</script>
+</body>
+</html>
