@@ -73,12 +73,35 @@
     <p class="brand">Outcome<span>Star</span> Admin</p>
     <div style="display:flex;align-items:center">
       <span class="who" id="who"></span>
-      <button class="btn ghost" id="refresh">Refresh</button>
+      <button class="btn ghost" id="nav-stats">Stats</button>
+      <button class="btn ghost" id="nav-users" style="margin-left:8px">User Admin</button>
+      <button class="btn ghost" id="refresh" style="margin-left:8px">Refresh</button>
       <button class="btn ghost" id="logout" style="margin-left:8px">Sign out</button>
     </div>
   </div>
   <div class="wrap" id="content">
     <p class="muted">Loading…</p>
+  </div>
+  <div class="wrap hidden" id="users-view">
+    <h2>Change my password</h2><div class="rule"></div>
+    <div class="card" style="max-width:420px">
+      <label>Current password</label><input id="cp-cur" type="password" autocomplete="current-password">
+      <label>New password</label><input id="cp-new" type="password" autocomplete="new-password">
+      <label>Confirm new password</label><input id="cp-conf" type="password" autocomplete="new-password">
+      <button class="btn" id="cp-btn" style="margin-top:16px">Change password</button>
+      <div class="err" id="cp-err"></div>
+      <div class="muted" id="cp-ok" style="display:none;color:#067647;margin-top:10px"></div>
+    </div>
+
+    <h2>Reset a user's password</h2><div class="rule"></div>
+    <div class="card">
+      <label>Search users (email or name)</label>
+      <div style="display:flex;gap:8px">
+        <input id="us-q" placeholder="type an email or name…" style="flex:1">
+        <button class="btn ghost" id="us-search">Search</button>
+      </div>
+      <div id="us-results" style="margin-top:14px"></div>
+    </div>
   </div>
 </div>
 
@@ -203,10 +226,76 @@ async function loadStats(){
 function card(k,v,s){ return '<div class="card"><div class="k">'+esc(k)+'</div><div class="v">'+(v==null?"—":v)+'</div>'+(s?'<div class="s">'+esc(s)+'</div>':'')+'</div>'; }
 function cardMoney(k,v){ return '<div class="card"><div class="k">'+esc(k)+'</div><div class="v" style="font-size:26px">'+money(v)+'</div></div>'; }
 
+// ---- view switching ----
+function showStats(){
+  document.getElementById("content").classList.remove("hidden");
+  document.getElementById("users-view").classList.add("hidden");
+}
+function showUsers(){
+  document.getElementById("content").classList.add("hidden");
+  document.getElementById("users-view").classList.remove("hidden");
+}
+
+// ---- change my password ----
+async function changeOwnPassword(){
+  const err=document.getElementById("cp-err"), ok=document.getElementById("cp-ok");
+  err.style.display="none"; ok.style.display="none";
+  const cur=document.getElementById("cp-cur").value, nw=document.getElementById("cp-new").value, cf=document.getElementById("cp-conf").value;
+  if(!cur||!nw){ err.textContent="Fill in all fields."; err.style.display="block"; return; }
+  if(nw.length<8){ err.textContent="New password must be at least 8 characters."; err.style.display="block"; return; }
+  if(nw!==cf){ err.textContent="New passwords do not match."; err.style.display="block"; return; }
+  try{
+    const r=await fetch(API+"/change-password",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+tok()},body:JSON.stringify({current_password:cur,new_password:nw})});
+    const d=await r.json();
+    if(!r.ok){ err.textContent=(d&&d.detail&&d.detail.message)||"Could not change password."; err.style.display="block"; return; }
+    ok.textContent="Password changed successfully."; ok.style.display="block";
+    document.getElementById("cp-cur").value=""; document.getElementById("cp-new").value=""; document.getElementById("cp-conf").value="";
+  }catch(e){ err.textContent="Network error."; err.style.display="block"; }
+}
+
+// ---- search + reset user passwords ----
+async function searchUsers(){
+  const q=document.getElementById("us-q").value.trim();
+  const box=document.getElementById("us-results");
+  box.innerHTML='<p class="muted">Searching…</p>';
+  try{
+    const r=await fetch(API+"/users?q="+encodeURIComponent(q),{headers:{Authorization:"Bearer "+tok()}});
+    const d=await r.json();
+    if(!r.ok){ box.innerHTML='<p class="err" style="display:block">Search failed.</p>'; return; }
+    if(!d.users.length){ box.innerHTML='<p class="muted">No users found.</p>'; return; }
+    box.innerHTML='<table><thead><tr><th>Email</th><th>Name</th><th>Tenant</th><th>Role</th><th>Password</th><th></th></tr></thead><tbody>'+
+      d.users.map(u=>{
+        const role=u.is_platform_admin?'<span style="color:#F07800;font-weight:600">admin</span>':'user';
+        const pw=u.has_password?'set':'<span class="muted">none</span>';
+        const ten=(u.tenants&&u.tenants.length)?esc(u.tenants.join(', ')):'<span class="muted">—</span>';
+        return '<tr><td>'+esc(u.email)+'</td><td>'+esc(u.display_name||'')+'</td><td>'+ten+'</td><td>'+role+'</td><td>'+pw+'</td>'+
+          '<td><button class="btn ghost" onclick="resetUser(\''+u.user_id+'\',\''+esc(u.email).replace(/'/g,"")+'\')">Set password</button></td></tr>';
+      }).join('')+'</tbody></table>';
+  }catch(e){ box.innerHTML='<p class="err" style="display:block">Network error.</p>'; }
+}
+
+async function resetUser(userId, email){
+  const np=prompt("Set a new password for "+email+"\n(min 8 characters):");
+  if(np===null) return;
+  if(np.length<8){ alert("Password must be at least 8 characters."); return; }
+  try{
+    const r=await fetch(API+"/users/"+userId+"/set-password",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+tok()},body:JSON.stringify({new_password:np})});
+    const d=await r.json();
+    if(!r.ok){ alert((d&&d.detail&&d.detail.message)||"Could not set password."); return; }
+    alert("Password set for "+email+".");
+    searchUsers();
+  }catch(e){ alert("Network error."); }
+}
+
 document.getElementById("login-btn").onclick=login;
 document.getElementById("pass").addEventListener("keydown",e=>{ if(e.key==="Enter") login(); });
 document.getElementById("logout").onclick=logout;
-document.getElementById("refresh").onclick=loadStats;
+document.getElementById("refresh").onclick=()=>{ showStats(); loadStats(); };
+document.getElementById("nav-stats").onclick=()=>{ showStats(); };
+document.getElementById("nav-users").onclick=()=>{ showUsers(); };
+document.getElementById("cp-btn").onclick=changeOwnPassword;
+document.getElementById("us-search").onclick=searchUsers;
+document.getElementById("us-q").addEventListener("keydown",e=>{ if(e.key==="Enter") searchUsers(); });
 
 // auto-resume if a token exists
 if(tok()) showDash();
